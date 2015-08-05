@@ -28,9 +28,10 @@ class SnapshotsByWorkspace
 		@headers.version = "1.0"
 
 		@config = {:base_url => config["url"]} # "https://rally1.rallydev.com/slm"}
+		# config[:api_key]   = config["api_key"]
 		@config[:username]   = config["username"] # "xxxbmullan@emc.com"
 		@config[:password]   = config["password"]
-		@config[:workspace]  = config["workspace_name"]
+		# @config[:workspace]  = config["workspace_name"]
 		@config[:version]    = "v2.0"
 		# @config[:project]    = projectName #@project_name
 		@config[:headers]    = @headers #from RallyAPI::CustomHttpHeader.new()
@@ -171,6 +172,7 @@ def validate_args args
 		config
 	end
 
+
 end
 
 config = validate_args(ARGV)
@@ -206,10 +208,15 @@ CSV.open(file, "wb") do |csv|
 	# csv << "\n"
 	workspaces.each { |workspace|
 		print workspace["Name"],workspace["ObjectID"],"\n"
-		body = snapshotsMachine.query_snapshots_for_workspace(workspace["ObjectID"])
-		jsonBody = JSON.parse(body)
-		print "Count:", jsonBody["TotalResultCount"],"\n"
-		csv << [workspace["Name"], workspace["ObjectID"], workspace["State"], jsonBody["TotalResultCount"]]
+		begin
+			body = snapshotsMachine.query_snapshots_for_workspace(workspace["ObjectID"])
+			jsonBody = JSON.parse(body)
+			print "Count:", jsonBody["TotalResultCount"],"\n"
+			csv << [workspace["Name"], workspace["ObjectID"], workspace["State"], jsonBody["TotalResultCount"]]
+		rescue
+			print "Failed on :",workspace["Name"]
+			next
+		end
 		# csv << "\n"
 	}
 end

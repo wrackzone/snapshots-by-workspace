@@ -2,5 +2,6 @@
 	"url" : "https://rally1.rallydev.com/slm",
 	"username" : "",
 	"workspace_name" : "",
-	"csv_file" : "foo.csv"
+	"csv_file" : "foo.csv",
+	"api_key" : ""
 }
