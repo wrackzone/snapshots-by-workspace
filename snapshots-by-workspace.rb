@@ -1,10 +1,10 @@
 #
 # Barry Mullan (c) Rally Software
 #
-# May 2013 - Extract certain sprint metrics to an xls file
+# August 2015 - Get snapshot counts per workspace in a subscription
 #
 # to run use ...
-# ruby xls-sprint-metrics.rb config.json <password>
+# ruby snapshots-by-workspace.rb <config>.json <password>
 #
 
 require 'rally_api'
@@ -175,6 +175,8 @@ def validate_args args
 
 end
 
+
+## check the command line arguments
 config = validate_args(ARGV)
 
 if  !config
@@ -182,47 +184,41 @@ if  !config
 	exit
 end
 
+
+## create instance of our class with configuration
 snapshotsMachine = SnapshotsByWorkspace.new( config )
 
-workspaces = snapshotsMachine.get_all_workspaces()
-
-# pp workspaces
-
-workspaces.each { |workspace|
-
-	# pp workspace["Name"],workspace["ObjectID"]
-
-}
-
+## get the subscription object, and from it our list of workspaces
 sub = snapshotsMachine.get_subscription()
-
-# pp sub
 
 ws = sub["Workspaces"]
 
+## convert the list of workspaces to a "plain" old ruby array
 workspaces = snapshotsMachine.rally_results_to_array(ws)
 
+## this is an integrity check to check for duplicates
 ids = workspaces.collect {|w| w["ObjectID"]}
-
 uniq_ids = ids.uniq
-
 print "Total ids:#{ids.length} Unique ids:#{uniq_ids.length}\n"
 
 
-len = workspaces.length
-print "Workspaces:#{len}\n"
-
+## csv header
 header = ["workspace","id","state","count"]
 
 file = config["csv_file"]
 index = 0
 CSV.open(file, "wb") do |csv|
 	csv << header
-	# csv << "\n"
+
+	## get the length of the array to show in output
+	len = workspaces.length
+	print "Workspaces:#{len}\n"
+
 	workspaces.each { |workspace|
 		index = index + 1
 		print index," of ",len,":",workspace["Name"]," [",workspace["ObjectID"],"]\n"
 		begin
+			## do a lbapi query for snapshots, parse the body response and display
 			body = snapshotsMachine.query_snapshots_for_workspace(workspace["ObjectID"])
 			jsonBody = JSON.parse(body)
 			print "Count:", jsonBody["TotalResultCount"],"\n"
@@ -231,7 +227,6 @@ CSV.open(file, "wb") do |csv|
 			print "Failed on :",workspace["Name"]
 			next
 		end
-		# csv << "\n"
 	}
 end
 
