@@ -198,16 +198,30 @@ sub = snapshotsMachine.get_subscription()
 
 # pp sub
 
-workspaces = sub["Workspaces"]
+ws = sub["Workspaces"]
+
+workspaces = snapshotsMachine.rally_results_to_array(ws)
+
+ids = workspaces.collect {|w| w["ObjectID"]}
+
+uniq_ids = ids.uniq
+
+print "Total ids:#{ids.length} Unique ids:#{uniq_ids.length}\n"
+
+
+len = workspaces.length
+print "Workspaces:#{len}\n"
 
 header = ["workspace","id","state","count"]
 
 file = config["csv_file"]
+index = 0
 CSV.open(file, "wb") do |csv|
 	csv << header
 	# csv << "\n"
 	workspaces.each { |workspace|
-		print workspace["Name"],workspace["ObjectID"],"\n"
+		index = index + 1
+		print index," of ",len,":",workspace["Name"]," [",workspace["ObjectID"],"]\n"
 		begin
 			body = snapshotsMachine.query_snapshots_for_workspace(workspace["ObjectID"])
 			jsonBody = JSON.parse(body)
